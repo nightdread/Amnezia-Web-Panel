@@ -109,6 +109,16 @@ class RknBlockUiWiringTests(unittest.TestCase):
         # host-level app installs directly, never through the AWG installer
         self.assertNotIn("installFromMarketplace('rknblock'", self.page)
         self.assertIn("installRknBlock()", self.page)
+        # The card HTML must interpolate the RKN-aware locals. A leftover
+        # installFromMarketplace('${app.proto}') still routes rknblock through
+        # POST /install and is invisible to the literal-string check above.
+        start = self.page.index('function renderMarketplace()')
+        end = self.page.index('function openMarketplaceModal()', start)
+        card = self.page[self.page.rindex('return `', start, end):end]
+        self.assertIn('${action}', card)
+        self.assertIn('${statusBadge}', card)
+        self.assertNotIn("installFromMarketplace('${app.proto}'", card)
+        self.assertNotIn('${marketplaceAppStatus(app.proto)}', card)
 
     def test_rknblock_card_as_marketplace_app(self):
         self.assertIn('id="proto-rknblock"', self.page)
